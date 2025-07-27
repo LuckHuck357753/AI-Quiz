@@ -5,7 +5,7 @@ import OvalTable, { OvalTablePlayer } from './OvalTable';
 
 console.log('[frontend] socket.id при инициализации:', io().id);
 
-const socket: Socket = io('http://localhost:4001', {
+const socket: Socket = io({
   timeout: 20000,
   transports: ['websocket', 'polling'],
   upgrade: true,

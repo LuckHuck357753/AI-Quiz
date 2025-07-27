@@ -158,7 +158,7 @@ const requireAuth = (req: Request, res: Response, next: Function) => {
 };
 
 // Обработка статических файлов frontend
-app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

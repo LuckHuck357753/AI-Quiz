@@ -158,7 +158,7 @@ const requireAuth = (req: Request, res: Response, next: Function) => {
 };
 
 // Обработка статических файлов frontend
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -176,7 +176,7 @@ app.get('/api/status', requireAuth, (req: Request, res: Response) => {
 });
 
 app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
 app.get('/tmdb-test', async (req, res) => {

@@ -34,10 +34,10 @@ RUN npm install -g pnpm
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 
-# Копируем package.json и устанавливаем только продакшн зависимости
+# Копируем package.json и устанавливаем зависимости
 COPY --from=builder /apps/backend/package.json ./
 COPY --from=builder /apps/backend/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Копируем собранный backend
 COPY --from=builder /apps/backend/dist ./dist

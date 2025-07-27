@@ -1,0 +1,7 @@
+node_modules
+26.07_1/
+backup_before_restore/
+uploads/
+.env
+dist/
+build/

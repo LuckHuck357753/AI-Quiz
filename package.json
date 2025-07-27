@@ -1,0 +1,21 @@
+{
+  "name": "multiplayer-quiz",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter frontend dev\" \"pnpm --filter backend dev\"",
+    "clean:start": "powershell -ExecutionPolicy Bypass -File ./clear-ports-and-restart.ps1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.0.0",
+    "openai": "^5.8.2"
+  }
+}

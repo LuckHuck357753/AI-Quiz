@@ -1,0 +1,242 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+
+const socket: Socket = io('http://localhost:4001');
+
+type QuizQuestion = {
+  question: string;
+  choices: string[];
+  number?: number;
+  total?: number;
+  imageUrl?: string;
+};
+
+type AnswerResult = {
+  correct: boolean;
+  score: number;
+};
+
+type GameOver = {
+  score: number;
+  total: number;
+};
+
+function App() {
+  const [connected, setConnected] = useState(false);
+  const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState<null | { correct: boolean }>(null);
+  const [questionNumber, setQuestionNumber] = useState<number>(1);
+  const [totalQuestions, setTotalQuestions] = useState<number>(10);
+  const [gameOver, setGameOver] = useState<null | GameOver>(null);
+  const [name, setName] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [started, setStarted] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>([]);
+  const [buttonsDisabled, setButtonsDisabled] = useState(false);
+  const nextQuestionTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [topic, setTopic] = useState('');
+  const [topicMode, setTopicMode] = useState<'movie' | 'custom'>('custom');
+  const topics = [
+    'География',
+    'Наука',
+    'История',
+    'Искусство',
+    'Математика',
+    'Языки',
+  ];
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
+  useEffect(() => {
+    socket.on('connect', () => setConnected(true));
+    socket.on('disconnect', () => setConnected(false));
+
+    socket.on('quizQuestion', (data: QuizQuestion) => {
+      setLoadingQuestions(false);
+      if (feedback) {
+        if (nextQuestionTimeout.current) clearTimeout(nextQuestionTimeout.current);
+        nextQuestionTimeout.current = setTimeout(() => {
+          setQuiz(data);
+          setFeedback(null);
+          setQuestionNumber(data.number || 1);
+          setTotalQuestions(data.total || 10);
+          setGameOver(null);
+          setButtonsDisabled(false);
+        }, 1000);
+      } else {
+        setQuiz(data);
+        setFeedback(null);
+        setQuestionNumber(data.number || 1);
+        setTotalQuestions(data.total || 10);
+        setGameOver(null);
+        setButtonsDisabled(false);
+      }
+    });
+
+    socket.on('answerResult', (result: AnswerResult) => {
+      setFeedback({ correct: result.correct });
+      setScore(result.score);
+      setButtonsDisabled(true);
+    });
+
+    socket.on('gameOver', (data: GameOver) => {
+      setGameOver(data);
+      setQuiz(null);
+      setFeedback(null);
+      setButtonsDisabled(false);
+      if (nextQuestionTimeout.current) clearTimeout(nextQuestionTimeout.current);
+    });
+
+    socket.on('leaderboard', (data) => setLeaderboard(data));
+
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('quizQuestion');
+      socket.off('answerResult');
+      socket.off('gameOver');
+      socket.off('leaderboard');
+      if (nextQuestionTimeout.current) clearTimeout(nextQuestionTimeout.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback]);
+
+  const handleStart = () => {
+    if (!nameInput.trim() || (topicMode === 'custom' && !topic.trim())) return;
+    setName(nameInput.trim());
+    setStarted(true);
+    setLoadingQuestions(true);
+    const sendTopic = topicMode === 'movie' ? 'Кино' : topic.trim();
+    socket.emit('startGame', { name: nameInput.trim(), topic: sendTopic });
+  };
+
+  const handleAnswer = (choice: string) => {
+    if (!started || !name || buttonsDisabled) return;
+    setButtonsDisabled(true);
+    socket.emit('submitAnswer', { answer: choice, name });
+    console.log('Ответ отправлен:', choice, 'от', name);
+  };
+
+  const handleRestart = () => {
+    setScore(0);
+    setFeedback(null);
+    setGameOver(null);
+    setQuiz(null);
+    setQuestionNumber(1);
+    setButtonsDisabled(false);
+    socket.emit('restartGame', { name, topic });
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
+        <div className="mb-4 text-2xl font-bold text-blue-300">Счёт: {score}</div>
+        <h1 className="text-3xl font-bold mb-4">Викторина</h1>
+        <p className="mb-2">Статус: {connected ? <span className="text-green-400">● Подключено</span> : <span className="text-red-400">● Нет связи</span>}</p>
+        {loadingQuestions ? (
+          <div className="mt-8 flex flex-col items-center justify-center gap-4">
+            <div className="flex items-center justify-center">
+              <span className="inline-block w-8 h-8 border-4 border-yellow-300 border-t-transparent rounded-full animate-spin mr-3"></span>
+              <span className="text-lg text-yellow-300">Готовим вопросы на выбранную вами тему...</span>
+            </div>
+          </div>
+        ) : !started ? (
+          <div className="mt-8">
+            <div className="flex justify-center gap-4 mb-4">
+              <button
+                className={`px-4 py-2 rounded font-bold ${topicMode === 'movie' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-blue-300'}`}
+                onClick={() => setTopicMode('movie')}
+              >
+                Кино
+              </button>
+              <button
+                className={`px-4 py-2 rounded font-bold ${topicMode === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-blue-300'}`}
+                onClick={() => setTopicMode('custom')}
+              >
+                Своя тема
+              </button>
+            </div>
+            {topicMode === 'custom' && (
+              <input
+                className="px-4 py-2 rounded text-black w-2/3 mb-4"
+                type="text"
+                placeholder="Введите тематику (например, Наука, Футбол, Космос...)"
+                value={topic}
+                onChange={e => setTopic(e.target.value)}
+                autoFocus
+              />
+            )}
+            <input
+              className="px-4 py-2 rounded text-black w-2/3 mb-4"
+              type="text"
+              placeholder="Введите имя"
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleStart()}
+            />
+            <br />
+            <button
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold"
+              onClick={handleStart}
+              disabled={!nameInput.trim() || (topicMode === 'custom' && !topic.trim())}
+            >
+              Начать игру
+            </button>
+          </div>
+        ) : gameOver ? (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-yellow-400 mb-4">Игра окончена</h2>
+            <div className="text-lg mb-2">Ваш итоговый счёт: <span className="font-bold text-blue-300">{gameOver.score} / {gameOver.total}</span></div>
+            <h3 className="text-xl font-bold mt-6 mb-2 text-yellow-300">Таблица лидеров</h3>
+            <ol className="text-left max-w-xs mx-auto">
+              {leaderboard.map((entry, idx) => (
+                <li key={idx} className="mb-1">
+                  <span className="font-bold">{idx + 1}.</span> {entry.name} — <span className="text-blue-300">{entry.score}</span>
+                </li>
+              ))}
+            </ol>
+            <button
+              className="mt-6 px-6 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-bold transition"
+              onClick={handleRestart}
+            >
+              Играть ещё раз
+            </button>
+          </div>
+        ) : quiz && (
+          console.log('QUIZ DEBUG:', quiz),
+          <div className="mt-6">
+            <div className="mb-2 text-lg text-gray-300">Вопрос {questionNumber} из {totalQuestions}</div>
+            {quiz.imageUrl && (
+              <img
+                src={quiz.imageUrl}
+                alt="Кадр из фильма"
+                className="mx-auto mb-4 rounded shadow max-h-64"
+                style={{ objectFit: 'cover' }}
+              />
+            )}
+            <h2 className="text-xl font-semibold mb-2">{quiz.question}</h2>
+            <div className="flex flex-col items-center gap-2">
+              {quiz.choices.map((choice, idx) => (
+                <button
+                  key={idx}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium w-full max-w-xs"
+                  onClick={() => handleAnswer(choice)}
+                  disabled={buttonsDisabled}
+                >
+                  {choice}
+                </button>
+              ))}
+            </div>
+            {feedback && (
+              <div className={`mt-4 text-lg font-bold ${feedback.correct ? 'text-green-400' : 'text-red-400'}`}>
+                {feedback.correct ? 'Верно!' : 'Неверно!'}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App; 

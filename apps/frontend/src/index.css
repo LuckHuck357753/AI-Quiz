@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 60% 40%, #23253a 60%, #0a0c1a 100%), #0a0c1a;
+  color: #fff;
+  font-family: 'Montserrat', 'Inter', 'Segoe UI', Arial, sans-serif;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('https://raw.githubusercontent.com/vedees/space-background/master/src/assets/stars.png'),
+              url('https://www.transparenttextures.com/patterns/stardust.png');
+  opacity: 0.8;
+  animation: stars-move 60s linear infinite, stars-twinkle 2s infinite alternate;
+}
+@keyframes stars-move {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 1000px 1000px, 200px 200px; }
+}
+@keyframes stars-twinkle {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+.glow-card {
+  box-shadow: 0 0 32px 8px #2e3cff44, 0 0 0 2px #2e3cff33;
+  border-radius: 1.5rem;
+}
+.glow-btn-yellow {
+  box-shadow: 0 0 16px 4px #ffe06699, 0 0 0 2px #ffe066cc;
+}
+.glow-btn-red {
+  box-shadow: 0 0 16px 4px #ff6b6b99, 0 0 0 2px #ff6b6bcc;
+}
+.glow-btn-blue {
+  box-shadow: 0 0 16px 4px #5bc0ff99, 0 0 0 2px #5bc0ffcc;
+}
+.glow-btn-green {
+  box-shadow: 0 0 16px 4px #51ffb0aa, 0 0 0 2px #51ffb0cc;
+}
+.glow-btn, .glow-card {
+  animation: neon-breath 2.8s ease-in-out infinite;
+  --neon-color: #5bc0ff;
+}
+.glow-btn-yellow { --neon-color: #ffe066; }
+.glow-btn-red { --neon-color: #ff6b6b; }
+.glow-btn-blue { --neon-color: #5bc0ff; }
+.glow-btn-green { --neon-color: #51ffb0; }
+.planet-btn {
+  transition: transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s, filter 0.25s;
+  will-change: transform, box-shadow, filter;
+  position: relative;
+  z-index: 1;
+}
+.planet-btn:hover, .planet-btn:focus {
+  transform: scale(1.08) rotate(-3deg);
+  filter: brightness(1.15) drop-shadow(0 0 16px #fff8) drop-shadow(0 0 32px currentColor);
+  box-shadow: 0 0 32px 8px #fff4, 0 0 0 2px #fff2;
+  animation: planet-pulse 0.7s linear;
+}
+.planet-btn:active, .planet-btn:focus {
+  box-shadow: 0 0 4px 1.5px #fff6, 0 0 0 1.5px var(--neon-color, #fff);
+  filter: drop-shadow(0 0 2px var(--neon-color, #fff));
+}
+@keyframes planet-pulse {
+  0% { filter: brightness(1.2) drop-shadow(0 0 24px #fff8); }
+  50% { filter: brightness(1.4) drop-shadow(0 0 40px #fff8); }
+  100% { filter: brightness(1.15) drop-shadow(0 0 16px #fff8); }
+}
+@keyframes neon-breath {
+  0%, 100% { filter: drop-shadow(0 0 0px var(--neon-color, #fff)); }
+  20% { filter: drop-shadow(0 0 2px var(--neon-color, #fff)); }
+  50% { filter: drop-shadow(0 0 8px var(--neon-color, #fff)); }
+  80% { filter: drop-shadow(0 0 2px var(--neon-color, #fff)); }
+}
+.parallax-container {
+  --parallax-x: 0;
+  --parallax-y: 0;
+}
+.parallax {
+  transition: transform 0.7s cubic-bezier(.22,1,.36,1);
+  will-change: transform;
+  /* Пример смещения: */
+  transform: translate3d(calc(var(--parallax-x,0) * 12px), calc(var(--parallax-y,0) * 12px), 0);
+} 

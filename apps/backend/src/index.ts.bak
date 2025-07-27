@@ -1,0 +1,311 @@
+import express, { Request, Response } from 'express';
+import http from 'http';
+import { Server, Socket } from 'socket.io';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import path from 'path';
+import axios from 'axios';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('ВНИМАНИЕ: OPENAI_API_KEY не найден! Проверьте файл apps/backend/.env');
+}
+console.log('ENV DEBUG (OPENAI_API_KEY, TMDB_API_KEY):', {
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  TMDB_API_KEY: process.env.TMDB_API_KEY
+});
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+});
+
+app.use(cors({ origin: 'http://localhost:5173' }));
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('Quiz backend running!');
+});
+
+// In-memory score, question progress, and seen questions per user
+const scores: Record<string, number> = {};
+const seenQuestions: Record<string, Set<number>> = {};
+const currentQuestions: Record<string, number> = {};
+// Добавляем хранение имён игроков
+const playerNames: Record<string, string> = {};
+// Лидерборд: массив объектов { name, score }
+let leaderboard: { name: string; score: number }[] = [];
+
+// Массив вопросов по темам
+const quizTopics: Record<string, { question: string; choices: string[]; answer: string }[]> = {
+  "География": [
+    { question: "Столица Франции?", choices: ["Берлин", "Лондон", "Париж", "Рим"], answer: "Париж" },
+    { question: "Самый большой океан на Земле?", choices: ["Атлантический", "Индийский", "Северный Ледовитый", "Тихий"], answer: "Тихий" }
+  ],
+  "Наука": [
+    { question: "Какая планета называется Красной?", choices: ["Земля", "Марс", "Юпитер", "Венера"], answer: "Марс" },
+    { question: "Химический символ золота?", choices: ["Au", "Ag", "Fe", "Pb"], answer: "Au" },
+    { question: "Самое твёрдое природное вещество?", choices: ["Золото", "Железо", "Алмаз", "Кварц"], answer: "Алмаз" }
+  ],
+  "История": [
+    { question: "Кто написал 'Быть или не быть'?", choices: ["Шекспир", "Толстой", "Хемингуэй", "Диккенс"], answer: "Шекспир" },
+    { question: "Какая страна принимала Олимпиаду 2016 года?", choices: ["Китай", "Бразилия", "Великобритания", "Россия"], answer: "Бразилия" }
+  ],
+  "Искусство": [
+    { question: "Кто написал 'Мону Лизу'?", choices: ["Ван Гог", "Пикассо", "Да Винчи", "Рембрандт"], answer: "Да Винчи" }
+  ],
+  "Математика": [
+    { question: "Самое маленькое простое число?", choices: ["0", "1", "2", "3"], answer: "2" }
+  ],
+  "Языки": [
+    { question: "На каком языке больше всего носителей?", choices: ["Английский", "Китайский", "Испанский", "Хинди"], answer: "Китайский" }
+  ]
+};
+
+// Для каждого игрока храним выбранную тему и массив вопросов этой темы
+const playerTopics: Record<string, string> = {};
+const playerQuestions: Record<string, { question: string; choices: string[]; answer: string }[]> = {};
+
+// Для хранения использованных вопросов по каждой теме (по тексту вопроса)
+const usedQuestionsByTopic: Record<string, Set<string>> = {};
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
+
+type QuizQ = { question: string; choices: string[]; answer: string; type?: 'text' | 'image'; imageUrl?: string };
+
+async function generateMovieImageQuestion(): Promise<QuizQ | null> {
+  try {
+    const tmdbKey = process.env.TMDB_API_KEY;
+    // Получаем случайную страницу популярных фильмов
+    const page = Math.floor(Math.random() * 10) + 1;
+    const moviesResp = await axios.get(`https://api.themoviedb.org/3/movie/popular?api_key=${tmdbKey}&language=ru-RU&page=${page}`);
+    const movies = moviesResp.data.results;
+    if (!movies || movies.length < 4) return null;
+    // Выбираем 4 случайных фильма
+    const shuffled = movies.sort(() => 0.5 - Math.random());
+    const correct = shuffled[0];
+    const choices = shuffled.slice(0, 4).map((m: any) => m.title);
+    // Берём backdrop или постер
+    const imageUrl = correct.backdrop_path
+      ? `https://image.tmdb.org/t/p/w780${correct.backdrop_path}`
+      : correct.poster_path
+      ? `https://image.tmdb.org/t/p/w500${correct.poster_path}`
+      : undefined;
+    if (!imageUrl) return null;
+    return {
+      type: 'image',
+      question: 'Какой фильм изображён на этом кадре?',
+      imageUrl,
+      choices,
+      answer: correct.title,
+    };
+  } catch (e) {
+    console.error('TMDB error:', e);
+    return null;
+  }
+}
+
+async function generateQuestionsForTopic(topic: string): Promise<QuizQ[]> {
+  if (topic.toLowerCase().includes('кино') || topic.toLowerCase().includes('фильм')) {
+    // Для темы "Кино" — 10 вопросов с кадрами
+    const questions: QuizQ[] = [];
+    let attempts = 0;
+    while (questions.length < 10 && attempts < 20) {
+      attempts++;
+      const q = await generateMovieImageQuestion();
+      if (q && !questions.some(qq => qq.imageUrl === q.imageUrl)) {
+        questions.push(q);
+      }
+    }
+    return questions;
+  }
+  const prompt = (n: number) => `Сгенерируй ${n} уникальных вопросов с 4 вариантами ответов и правильным ответом по теме "${topic}" на русском языке. Формат:\n[\n  {\"question\": \"...\", \"choices\": [\"...\", \"...\", \"...\", \"...\"], \"answer\": \"...\"},\n  ...\n]`;
+  if (!usedQuestionsByTopic[topic]) usedQuestionsByTopic[topic] = new Set();
+  let uniqueQuestions: QuizQ[] = [];
+  let attempts = 0;
+  const needed = 10;
+  while (uniqueQuestions.length < needed && attempts < 3) {
+    attempts++;
+    try {
+      console.log('OpenAI PROMPT:', prompt(15));
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'Ты помощник для создания викторин.' },
+          { role: 'user', content: prompt(15) }
+        ],
+        temperature: 0.7,
+        max_tokens: 1200
+      });
+      const text = completion.choices[0].message?.content || '';
+      console.log('OpenAI RAW RESPONSE:', text);
+      const match = text.match(/\[.*\]/s);
+      const json = match ? match[0] : text;
+      console.log('Extracted JSON:', json);
+      let questions: QuizQ[];
+      try {
+        questions = JSON.parse(json);
+      } catch (parseErr) {
+        console.error('Ошибка парсинга JSON:', parseErr, '\nJSON:', json);
+        continue;
+      }
+      // Фильтрация уже использованных и уже выбранных вопросов
+      const filtered = questions.filter(q => !usedQuestionsByTopic[topic].has(q.question) && !uniqueQuestions.some(uq => uq.question === q.question));
+      uniqueQuestions = uniqueQuestions.concat(filtered);
+    } catch (e) {
+      console.error('Ошибка генерации вопросов:', e);
+      break;
+    }
+  }
+  if (uniqueQuestions.length === 0) return [];
+  // Добавить новые вопросы в usedQuestionsByTopic
+  uniqueQuestions.slice(0, needed).forEach(q => usedQuestionsByTopic[topic].add(q.question));
+  return uniqueQuestions.slice(0, needed);
+}
+
+function getRandomUnseenQuestionIndex(seen: Set<number>, questions: { question: string; choices: string[]; answer: string }[]) {
+  const unseen = questions.map((_, idx) => idx).filter(idx => !seen.has(idx));
+  if (unseen.length === 0) return null;
+  const randIdx = Math.floor(Math.random() * unseen.length);
+  return unseen[randIdx];
+}
+
+io.on('connection', (socket: Socket) => {
+  console.log('A user connected:', socket.id);
+  scores[socket.id] = 0;
+  seenQuestions[socket.id] = new Set();
+
+  // Получаем имя и тему при старте игры
+  socket.on('startGame', async (data: { name: string; topic: string }) => {
+    try {
+      playerNames[socket.id] = data.name;
+      playerTopics[socket.id] = data.topic;
+      let questions = quizTopics[data.topic] || [];
+      // Если нет вопросов по теме — генерируем через OpenAI
+      if (questions.length === 0) {
+        questions = await generateQuestionsForTopic(data.topic);
+        quizTopics[data.topic] = questions;
+      }
+      playerQuestions[socket.id] = questions;
+      seenQuestions[socket.id] = new Set();
+      scores[socket.id] = 0;
+      if (questions.length === 0) {
+        socket.emit('quizQuestion', { question: 'Нет вопросов по выбранной теме.', choices: [], number: 1, total: 1 });
+        return;
+      }
+      const qIdx = getRandomUnseenQuestionIndex(seenQuestions[socket.id], questions);
+      if (qIdx !== null) {
+        currentQuestions[socket.id] = qIdx;
+        seenQuestions[socket.id].add(qIdx);
+        socket.emit('quizQuestion', {
+          question: questions[qIdx].question,
+          choices: questions[qIdx].choices,
+          number: seenQuestions[socket.id].size,
+          total: questions.length
+        });
+        console.log(`Sent quizQuestion #${seenQuestions[socket.id].size} to ${socket.id}:`, questions[qIdx]);
+      }
+      // Добавить новые вопросы в usedQuestionsByTopic
+      if (!usedQuestionsByTopic[data.topic]) usedQuestionsByTopic[data.topic] = new Set();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      questions.forEach((q: QuizQ) => usedQuestionsByTopic[data.topic].add(q.question));
+    } catch (err) {
+      console.error('Ошибка в startGame:', err);
+      socket.emit('quizQuestion', { question: 'Произошла ошибка на сервере. Попробуйте другую тему или позже.', choices: [], number: 1, total: 1 });
+    }
+  });
+
+  socket.on('submitAnswer', (data: { answer: string; name: string }) => {
+    const questions = playerQuestions[socket.id] || [];
+    const qIdx = currentQuestions[socket.id];
+    const quizQuestion = questions[qIdx];
+    const isCorrect = quizQuestion && data.answer === quizQuestion.answer;
+    if (isCorrect) {
+      scores[socket.id] = (scores[socket.id] || 0) + 1;
+    }
+    socket.emit('answerResult', {
+      correct: !!isCorrect,
+      score: scores[socket.id] || 0
+    });
+    // If player has answered all questions, end the game
+    if (seenQuestions[socket.id].size >= questions.length) {
+      const name = playerNames[socket.id] || data.name || 'Игрок';
+      leaderboard = [
+        ...leaderboard.filter(entry => entry.name !== name),
+        { name, score: scores[socket.id] }
+      ]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10); // top-10
+      io.emit('leaderboard', leaderboard);
+      socket.emit('gameOver', { score: scores[socket.id], total: questions.length });
+      return;
+    }
+    // Send a new random, not-yet-seen question
+    const newQIdx = getRandomUnseenQuestionIndex(seenQuestions[socket.id], questions);
+    if (newQIdx !== null) {
+      currentQuestions[socket.id] = newQIdx;
+      seenQuestions[socket.id].add(newQIdx);
+      socket.emit('quizQuestion', {
+        question: questions[newQIdx].question,
+        choices: questions[newQIdx].choices,
+        number: seenQuestions[socket.id].size,
+        total: questions.length
+      });
+      console.log(`Sent quizQuestion #${seenQuestions[socket.id].size} to ${socket.id}:`, questions[newQIdx]);
+    }
+  });
+
+  socket.on('restartGame', async (data: { name: string; topic: string }) => {
+    scores[socket.id] = 0;
+    seenQuestions[socket.id] = new Set();
+    playerNames[socket.id] = data.name;
+    playerTopics[socket.id] = data.topic;
+    let questions = quizTopics[data.topic] || [];
+    if (questions.length === 0) {
+      questions = await generateQuestionsForTopic(data.topic);
+      quizTopics[data.topic] = questions;
+    }
+    playerQuestions[socket.id] = questions;
+    if (questions.length === 0) {
+      socket.emit('quizQuestion', { question: 'Нет вопросов по выбранной теме.', choices: [], number: 1, total: 1 });
+      return;
+    }
+    const qIdx = getRandomUnseenQuestionIndex(seenQuestions[socket.id], questions);
+    if (qIdx !== null) {
+      currentQuestions[socket.id] = qIdx;
+      seenQuestions[socket.id].add(qIdx);
+      socket.emit('quizQuestion', {
+        question: questions[qIdx].question,
+        choices: questions[qIdx].choices,
+        number: seenQuestions[socket.id].size,
+        total: questions.length
+      });
+      console.log(`(RESTART) Sent quizQuestion #${seenQuestions[socket.id].size} to ${socket.id}:`, questions[qIdx]);
+    }
+    // Добавить новые вопросы в usedQuestionsByTopic
+    if (!usedQuestionsByTopic[data.topic]) usedQuestionsByTopic[data.topic] = new Set();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    questions.forEach((q: QuizQ) => usedQuestionsByTopic[data.topic].add(q.question));
+  });
+
+  socket.on('disconnect', () => {
+    delete scores[socket.id];
+    delete seenQuestions[socket.id];
+    delete currentQuestions[socket.id];
+    delete playerNames[socket.id];
+    delete playerTopics[socket.id];
+    delete playerQuestions[socket.id];
+  });
+});
+
+// Changed port from 4000 to 4001 for testing to avoid EADDRINUSE errors
+const PORT = 4001;
+server.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+}); 

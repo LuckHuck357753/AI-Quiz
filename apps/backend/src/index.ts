@@ -47,6 +47,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',
   'https://localhost:5173',
+  'https://ai-quiz-production.up.railway.app',
+  'https://*.up.railway.app',
   process.env.RAILWAY_STATIC_URL,
   process.env.RAILWAY_PUBLIC_DOMAIN
 ].filter(Boolean) as string[];

@@ -36,6 +36,7 @@ RUN adduser -S nodejs -u 1001
 
 # Копируем package.json и устанавливаем только продакшн зависимости
 COPY --from=builder /apps/backend/package.json ./
+COPY --from=builder /apps/backend/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 # Копируем собранный backend

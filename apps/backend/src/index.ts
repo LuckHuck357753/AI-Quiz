@@ -1224,8 +1224,8 @@ io.on('connection', (socket: Socket) => {
   });
 });
 
-// Changed port from 4000 to 4001 for testing to avoid EADDRINUSE errors
-const PORT = 4001;
+// Use environment port or default to 3000
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 }); 

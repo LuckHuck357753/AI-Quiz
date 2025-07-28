@@ -94,6 +94,11 @@ function App() {
 
   // Состояние для анимированной ракеты
   const [showRocket, setShowRocket] = useState(false);
+  
+  // Отладочная информация для ракеты
+  useEffect(() => {
+    console.log('[App] showRocket state changed:', showRocket);
+  }, [showRocket]);
 
   const roomStateRef = useRef(roomState);
   useEffect(() => {
@@ -795,7 +800,7 @@ function App() {
   // ОДИНОЧНАЯ ИГРА (старая логика)
   if (mainMode === 'single') {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white relative">
       <YandexRocket 
         isVisible={showRocket} 
         onAnimationComplete={() => setShowRocket(false)} 
@@ -1194,7 +1199,7 @@ function App() {
       isObjectPlayers ? { id: p.id || String(i), name: p.name, avatar: p.avatar, answered: p.answered, color: getColorById(p.id || String(i)) } : { id: String(i), name: p, avatar: '', answered: false, color: getColorById(String(i)) }
     );
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white relative">
         <YandexRocket 
           isVisible={showRocket} 
           onAnimationComplete={() => setShowRocket(false)} 

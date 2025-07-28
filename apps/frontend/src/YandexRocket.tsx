@@ -29,7 +29,10 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
   }, [isVisible, isAnimating, onAnimationComplete]);
 
   console.log('[YandexRocket] Rendering component:', { isVisible, isAnimating });
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log('[YandexRocket] Component not visible, returning null');
+    return null;
+  }
 
   return (
     <div 

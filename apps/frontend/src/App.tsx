@@ -389,6 +389,12 @@ function App() {
         console.log('[frontend][quizQuestion] roomState:', currentRoomState);
         console.log('[frontend][quizQuestion] данные вопроса:', data);
         console.log('[frontend][quizQuestion] номер вопроса:', data.number, 'из', data.total);
+        
+        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Убеждаемся, что хост тоже получает первый вопрос
+        if (currentMainMode === 'multi' && data.number === 1) {
+          console.log('[frontend][quizQuestion] 🎯 ПЕРВЫЙ ВОПРОС В МУЛЬТИПЛЕЕРЕ - ОБРАБАТЫВАЕМ!');
+        }
+        
         if (currentMainMode === 'single') {
           setLoadingQuestions(false);
           setQuiz(data);
@@ -402,24 +408,30 @@ function App() {
           console.log('[frontend][quizQuestion] setQuiz (single), feedback reset to null, timer started', data);
           return;
         }
-        if (currentMainMode !== 'multi' && (!currentRoomState || !('code' in currentRoomState))) {
-          console.log('[frontend][quizQuestion] skipped: mainMode !== multi && (!roomState || !code in roomState)', currentMainMode, currentRoomState);
-          return;
+        
+        // УБИРАЕМ СЛИШКОМ СТРОГУЮ ПРОВЕРКУ: Позволяем обрабатывать вопрос даже если roomState еще не обновился
+        if (currentMainMode === 'multi') {
+          console.log('[frontend][quizQuestion] ✅ Обрабатываем вопрос в мультиплеере');
+          
+          // Обновляем roomState если нужно
+          if (currentRoomState && currentRoomState.mode === 'waiting') {
+            console.log('[frontend][quizQuestion] Обновляем roomState с waiting на playing');
+            setRoomState(prev => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
+          }
+          
+          setLoadingQuestions(false);
+          setQuiz(data);
+          setFeedback(null);
+          setQuestionNumber(data.number || 1);
+          setTotalQuestions(data.total || 10);
+          setGameOver(null);
+          setButtonsDisabled(false);
+          setHasAnswered(false); // Сбрасываем состояние ответа при новом вопросе
+          setMultiTimer(15); // Сбрасываем таймер на 15 секунд
+          console.log('[frontend][quizQuestion] setQuiz (multi), timer reset to 15', data);
+        } else {
+          console.log('[frontend][quizQuestion] skipped: mainMode !== multi', currentMainMode);
         }
-        if (currentRoomState.mode === 'waiting') {
-          setRoomState(prev => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
-        }
-        console.log('[frontend][quizQuestion] (multi) roomState:', currentRoomState, 'roomPlayers:', roomPlayers);
-        setLoadingQuestions(false);
-        setQuiz(data);
-        setFeedback(null);
-        setQuestionNumber(data.number || 1);
-        setTotalQuestions(data.total || 10);
-        setGameOver(null);
-        setButtonsDisabled(false);
-        setHasAnswered(false); // Сбрасываем состояние ответа при новом вопросе
-        setMultiTimer(15); // Сбрасываем таймер на 15 секунд
-        console.log('[frontend][quizQuestion] setQuiz (multi), timer reset to 15', data);
       });
 
       // Обработчик результата ответа
@@ -730,20 +742,25 @@ function App() {
     console.log('[handleStartRoomGame] roomState:', roomState);
     console.log('[handleStartRoomGame] mainMode:', mainMode);
     
-    setMainMode('multi'); // Явно мультиплеер
-    console.log('[handleStartRoomGame] отправляем startGame на сервер');
-    socket.emit('startGame', { code: roomCode }, (res: { success?: boolean; error?: string }) => {
-      console.log('[handleStartRoomGame] получен callback от сервера:', res);
-      if (res.success) {
-        console.log('[handleStartRoomGame] ✓ успешный старт, ждем quizQuestion от сервера');
-        setRoomState((prev) => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
-      } else {
-        console.log('[handleStartRoomGame] ✗ ошибка старта:', res.error);
-        alert(res.error || 'Ошибка старта игры');
-        setRoomState({ mode: 'init' });
-        setMainMode('select');
-      }
-    });
+    // ВАЖНО: Сначала устанавливаем режим, чтобы подписка на quizQuestion работала правильно
+    setMainMode('multi');
+    
+    // Небольшая задержка для гарантии, что mainMode обновился
+    setTimeout(() => {
+      console.log('[handleStartRoomGame] отправляем startGame на сервер');
+      socket.emit('startGame', { code: roomCode }, (res: { success?: boolean; error?: string }) => {
+        console.log('[handleStartRoomGame] получен callback от сервера:', res);
+        if (res.success) {
+          console.log('[handleStartRoomGame] ✓ успешный старт, ждем quizQuestion от сервера');
+          setRoomState((prev) => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
+        } else {
+          console.log('[handleStartRoomGame] ✗ ошибка старта:', res.error);
+          alert(res.error || 'Ошибка старта игры');
+          setRoomState({ mode: 'init' });
+          setMainMode('select');
+        }
+      });
+    }, 50); // Небольшая задержка для синхронизации состояния
   };
   // Мультиплеер: отправить сообщение
   const handleSendMessage = () => {

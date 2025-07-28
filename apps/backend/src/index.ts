@@ -1095,13 +1095,13 @@ io.on('connection', (socket: Socket) => {
     console.log(`[sendSynchronizedQuestion] отправляем вопрос #${idx + 1}:`, q.question);
     console.log(`[sendSynchronizedQuestion] игроки в комнате:`, room.players.map(id => ({ id, name: room.playerNames[id] })));
     
-    // Отправляем вопрос ВСЕМ игрокам одновременно
-    room.players.forEach(id => {
-      const questionData = { ...q, number: idx + 1, total: room.questions.length };
-      console.log('[sendSynchronizedQuestion] отправляем игроку:', id, 'имя:', room.playerNames[id], 'вопрос #:', idx + 1, 'время:', new Date().toISOString());
-      io.to(id).emit('quizQuestion', questionData);
-      console.log('[sendSynchronizedQuestion] ✓ отправлен quizQuestion игроку:', id, 'вопрос #:', idx + 1);
-    });
+    // Отправляем вопрос ВСЕМ игрокам одновременно через комнату
+    const questionData = { ...q, number: idx + 1, total: room.questions.length };
+    console.log('[sendSynchronizedQuestion] отправляем вопрос ВСЕМ игрокам комнаты одновременно');
+    console.log('[sendSynchronizedQuestion] игроки:', room.players.map(id => ({ id, name: room.playerNames[id] })));
+    console.log('[sendSynchronizedQuestion] время отправки:', new Date().toISOString());
+    io.to(code).emit('quizQuestion', questionData);
+    console.log('[sendSynchronizedQuestion] ✓ отправлен quizQuestion ВСЕМ игрокам комнаты:', code);
     // Лидерборд
     const leaderboard = room.players.map(pid => ({ name: room.playerNames[pid], score: room.scores[pid] || 0 }))
       .sort((a, b) => b.score - a.score);

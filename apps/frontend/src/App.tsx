@@ -1187,6 +1187,33 @@ function App() {
     );
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white relative">
+        {/* Видео Я team над столом игроков */}
+        {showYateamVideo && (
+          <div className="fixed inset-0 z-40 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+              <div className="relative">
+                <video 
+                  src="/assets/yateam.mp4" 
+                  controls 
+                  autoPlay 
+                  className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600"
+                  onError={(e) => {
+                    console.error('[Video] Error loading video:', e);
+                    console.error('[Video] Video element:', e.target);
+                  }}
+                  onLoadStart={() => console.log('[Video] Loading started')}
+                  onCanPlay={() => console.log('[Video] Can play')}
+                  onPlay={() => console.log('[Video] Playing')}
+                />
+                <button
+                  className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition"
+                  onClick={() => setShowYateamVideo(false)}
+                  title="Закрыть видео"
+                >✕</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-row justify-center gap-8 w-full max-w-[1400px]">
           {/* Левая колонка: игровой блок */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-[320px] max-w-md">
@@ -1436,37 +1463,7 @@ function App() {
   }
 
   // fallback на случай некорректного состояния
-  return (
-    <>
-      {/* Видео Я team над столом игроков */}
-      {showYateamVideo && (
-        <div className="fixed inset-0 z-40 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-            <div className="relative">
-              <video 
-                src="/assets/yateam.mp4" 
-                controls 
-                autoPlay 
-                className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600"
-                onError={(e) => {
-                  console.error('[Video] Error loading video:', e);
-                  console.error('[Video] Video element:', e.target);
-                }}
-                onLoadStart={() => console.log('[Video] Loading started')}
-                onCanPlay={() => console.log('[Video] Can play')}
-                onPlay={() => console.log('[Video] Playing')}
-              />
-              <button
-                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition"
-                onClick={() => setShowYateamVideo(false)}
-                title="Закрыть видео"
-              >✕</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return null;
 }
 
 export default App; 

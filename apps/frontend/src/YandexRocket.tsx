@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+// 🚀 Yandex Team Rocket Animation Component - Force Railway Deployment
+
 interface YandexRocketProps {
   isVisible?: boolean;
   onAnimationComplete?: () => void;

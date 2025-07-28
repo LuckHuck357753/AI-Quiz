@@ -4,6 +4,8 @@ import AvatarPicker from './AvatarPicker';
 import OvalTable, { OvalTablePlayer } from './OvalTable';
 import YandexRocket from './YandexRocket';
 
+// 🚀 Yandex Team Rocket Animation - Force deployment
+
 console.log('[frontend] socket.id при инициализации:', io().id);
 
 const socket: Socket = io({

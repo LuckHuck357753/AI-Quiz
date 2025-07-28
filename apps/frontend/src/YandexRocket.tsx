@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-// �� Yandex Team Rocket - User's original GIF
+// 🚀 Yandex Team Rocket - User's original GIF
 
 interface YandexRocketProps {
   isVisible?: boolean;
@@ -55,9 +55,36 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
         alt="Yandex Team Rocket"
         className="w-full h-full object-contain"
         style={{
-          filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))'
+          filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))',
+          mixBlendMode: 'normal',
+          backgroundColor: 'transparent'
         }}
       />
+      
+      {/* CSS для удаления прозрачности */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          img[src="/assets/yandex-rocket.gif"] {
+            background: transparent !important;
+            mix-blend-mode: normal !important;
+            isolation: isolate;
+          }
+          
+          /* Убираем прозрачные области */
+          img[src="/assets/yandex-rocket.gif"] {
+            background-color: transparent !important;
+            background-image: none !important;
+          }
+          
+          /* Альтернативный способ - замена прозрачности на цвет фона игры */
+          @supports (mix-blend-mode: multiply) {
+            img[src="/assets/yandex-rocket.gif"] {
+              mix-blend-mode: multiply;
+              background-color: #111827; /* Цвет фона игры */
+            }
+          }
+        `
+      }} />
     </div>
   );
 };

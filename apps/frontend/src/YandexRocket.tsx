@@ -49,38 +49,50 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
           : 'transform 0.5s ease-out, opacity 0.5s ease-out'
       }}
     >
-      {/* Оригинальный GIF с ракетой Yandex Team */}
-      <img 
-        src="/assets/yandex-rocket.gif"
-        alt="Yandex Team Rocket"
-        className="w-full h-full object-contain"
+      {/* Контейнер с фоном игры для маскировки прозрачности */}
+      <div 
+        className="w-full h-full relative overflow-hidden rounded-lg"
         style={{
-          filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))',
-          mixBlendMode: 'normal',
-          backgroundColor: 'transparent'
+          background: 'linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%)',
+          boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)'
         }}
-      />
+      >
+        {/* Оригинальный GIF с ракетой Yandex Team */}
+        <img 
+          src="/assets/yandex-rocket.gif"
+          alt="Yandex Team Rocket"
+          className="w-full h-full object-contain"
+          style={{
+            filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))',
+            mixBlendMode: 'normal'
+          }}
+        />
+      </div>
       
-      {/* CSS для удаления прозрачности */}
+      {/* CSS для полного удаления прозрачности */}
       <style dangerouslySetInnerHTML={{
         __html: `
+          /* Убираем все прозрачные области */
           img[src="/assets/yandex-rocket.gif"] {
             background: transparent !important;
             mix-blend-mode: normal !important;
             isolation: isolate;
+            image-rendering: pixelated;
           }
           
-          /* Убираем прозрачные области */
+          /* Принудительно убираем прозрачность */
           img[src="/assets/yandex-rocket.gif"] {
             background-color: transparent !important;
             background-image: none !important;
+            -webkit-background-clip: unset !important;
+            background-clip: unset !important;
           }
           
-          /* Альтернативный способ - замена прозрачности на цвет фона игры */
+          /* Альтернативный способ - замена прозрачности на цвет фона */
           @supports (mix-blend-mode: multiply) {
             img[src="/assets/yandex-rocket.gif"] {
               mix-blend-mode: multiply;
-              background-color: #111827; /* Цвет фона игры */
+              background-color: #111827 !important;
             }
           }
         `

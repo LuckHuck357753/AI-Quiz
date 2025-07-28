@@ -11,6 +11,7 @@ export type OvalTableProps = {
   players: OvalTablePlayer[];
   onAvatarClick?: (player: OvalTablePlayer) => void;
   onInteraction?: (player: OvalTablePlayer, type: string) => void;
+  onShowYateamVideo?: () => void;
   width?: number;
   height?: number;
   myId?: string;
@@ -24,7 +25,7 @@ const INTERACTIONS = [
   { type: 'tease', label: 'Подразнил', emoji: '😜' },
 ];
 
-export default function OvalTable({ players, onAvatarClick, onInteraction, width = 340, height = 200, myId }: OvalTableProps) {
+export default function OvalTable({ players, onAvatarClick, onInteraction, onShowYateamVideo, width = 340, height = 200, myId }: OvalTableProps) {
   const centerX = width / 2;
   const centerY = height / 2;
   const rx = width / 2 - 40;
@@ -93,7 +94,10 @@ export default function OvalTable({ players, onAvatarClick, onInteraction, width
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto select-none flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
           style={{ width: 180 }}
-          onClick={() => setShowVideo(true)}
+          onClick={() => {
+            setShowVideo(true);
+            onShowYateamVideo?.();
+          }}
           title="Показать видео Я team"
         >
           <div className="flex items-center gap-2 bg-gray-800 bg-opacity-80 rounded-lg px-4 py-2">

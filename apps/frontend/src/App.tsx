@@ -116,6 +116,9 @@ function App() {
   // Состояние для отслеживания ответа в мультиплеере
   const [hasAnswered, setHasAnswered] = useState(false);
 
+  // Состояние для показа видео Я team
+  const [showYateamVideo, setShowYateamVideo] = useState(false);
+
   // Состояния для работы с файлами
   const [fileUploadStatus, setFileUploadStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [fileUploadMessage, setFileUploadMessage] = useState('');
@@ -481,11 +484,27 @@ function App() {
     return () => { socket.off('playerInteraction', onInteraction); };
   }, [roomPlayers]);
 
+  // Подписка на показ видео Я team
+  useEffect(() => {
+    function onShowYateamVideo() {
+      setShowYateamVideo(true);
+    }
+    socket.on('showYateamVideo', onShowYateamVideo);
+    return () => { socket.off('showYateamVideo', onShowYateamVideo); };
+  }, []);
+
   // Добавляю обработчик взаимодействий между игроками
   const handlePlayerInteraction = (player: any, type: string) => {
     if (!roomState || !('code' in roomState)) return;
     if (!player.id) return;
     socket.emit('playerInteraction', { code: roomState.code, to: player.id, type });
+  };
+
+  // Функция для показа видео Я team всем игрокам
+  const handleShowYateamVideo = () => {
+    if (!roomState || !('code' in roomState)) return;
+    socket.emit('showYateamVideo', { code: roomState.code });
+    setShowYateamVideo(true);
   };
 
   const handleStart = () => {
@@ -1366,6 +1385,7 @@ function App() {
               <OvalTable
                 players={tablePlayers}
                 onInteraction={handlePlayerInteraction}
+                onShowYateamVideo={handleShowYateamVideo}
                 width={510}
                 height={300}
                 myId={socket.id}
@@ -1409,7 +1429,23 @@ function App() {
   }
 
   // fallback на случай некорректного состояния
-  return null;
+  return (
+    <>
+      {/* Глобальное видео Я team для синхронизации */}
+      {showYateamVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowYateamVideo(false)}>
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <video src="/assets/yateam.mp4" controls autoPlay className="max-w-[90vw] max-h-[70vh] rounded-lg shadow-2xl" />
+            <button
+              className="absolute top-2 right-2 bg-gray-800 bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition"
+              onClick={() => setShowYateamVideo(false)}
+              title="Закрыть видео"
+            >✕</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default App; 

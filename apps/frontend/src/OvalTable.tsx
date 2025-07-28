@@ -33,7 +33,6 @@ export default function OvalTable({ players, onAvatarClick, onInteraction, onSho
   const angleStep = (2 * Math.PI) / players.length;
   const [menuIdx, setMenuIdx] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [showVideo, setShowVideo] = useState(false);
 
   // Закрытие меню при клике вне
   React.useEffect(() => {
@@ -95,7 +94,6 @@ export default function OvalTable({ players, onAvatarClick, onInteraction, onSho
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto select-none flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
           style={{ width: 180 }}
           onClick={() => {
-            setShowVideo(true);
             onShowYateamVideo?.();
           }}
           title="Показать видео Я team"
@@ -107,19 +105,6 @@ export default function OvalTable({ players, onAvatarClick, onInteraction, onSho
             <span className="text-white font-semibold text-lg" style={{ fontFamily: 'cursive' }}>team</span>
           </div>
         </div>
-        {/* Видео поверх стола */}
-        {showVideo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowVideo(false)}>
-            <div className="relative" onClick={e => e.stopPropagation()}>
-              <video src="/assets/yateam.mp4" controls autoPlay className="max-w-[90vw] max-h-[70vh] rounded-lg shadow-2xl" />
-              <button
-                className="absolute top-2 right-2 bg-gray-800 bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition"
-                onClick={() => setShowVideo(false)}
-                title="Закрыть видео"
-              >✕</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

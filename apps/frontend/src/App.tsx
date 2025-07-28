@@ -1431,16 +1431,23 @@ function App() {
   // fallback на случай некорректного состояния
   return (
     <>
-      {/* Глобальное видео Я team для синхронизации */}
+      {/* Видео Я team над столом игроков */}
       {showYateamVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowYateamVideo(false)}>
-          <div className="relative" onClick={e => e.stopPropagation()}>
-            <video src="/assets/yateam.mp4" controls autoPlay className="max-w-[90vw] max-h-[70vh] rounded-lg shadow-2xl" />
-            <button
-              className="absolute top-2 right-2 bg-gray-800 bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition"
-              onClick={() => setShowYateamVideo(false)}
-              title="Закрыть видео"
-            >✕</button>
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+            <div className="relative">
+              <video 
+                src="/assets/yateam.mp4" 
+                controls 
+                autoPlay 
+                className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600" 
+              />
+              <button
+                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition"
+                onClick={() => setShowYateamVideo(false)}
+                title="Закрыть видео"
+              >✕</button>
+            </div>
           </div>
         </div>
       )}

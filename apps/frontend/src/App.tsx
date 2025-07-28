@@ -1187,10 +1187,10 @@ function App() {
     );
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white relative">
-        {/* Видео Я team прямо над столом в правой части */}
+        {/* Видео Я team в правом верхнем углу над столом */}
         {showYateamVideo && (
           <div className="fixed inset-0 z-40 pointer-events-none">
-            <div className="absolute top-1/6 right-1/6 pointer-events-auto">
+            <div className="absolute top-1/6 right-4 pointer-events-auto">
               <div className="relative">
                 <video 
                   src="/assets/yateam.mp4" 

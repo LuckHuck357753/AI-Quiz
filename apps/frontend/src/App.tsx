@@ -222,13 +222,35 @@ function App() {
     if (!showGifPicker || !gifSearch.trim()) return;
     const controller = new AbortController();
     console.log('GIPHY_API_KEY:', GIPHY_API_KEY); // debug
+    
+    if (!GIPHY_API_KEY) {
+      console.error('GIPHY API ключ не найден!');
+      setGifResults([]);
+      return;
+    }
+    
     fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(gifSearch)}&limit=16&rating=pg`, { signal: controller.signal })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          throw new Error(`HTTP error! status: ${r.status}`);
+        }
+        return r.json();
+      })
       .then(data => {
-        setGifResults((data.data || []).map((g: any) => ({ url: g.images.original.url, preview: g.images.fixed_height_small.url })));
+        console.log('GIPHY response:', data);
+        if (data.data) {
+          setGifResults((data.data || []).map((g: any) => ({ url: g.images.original.url, preview: g.images.fixed_height_small.url })));
+        } else {
+          console.error('GIPHY API вернул неожиданный формат:', data);
+          setGifResults([]);
+        }
+      })
+      .catch(error => {
+        console.error('Ошибка при загрузке GIF:', error);
+        setGifResults([]);
       });
     return () => controller.abort();
-  }, [showGifPicker, gifSearch]);
+  }, [showGifPicker, gifSearch, GIPHY_API_KEY]);
   // Закрытие emoji/gif picker при клике вне
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -1392,6 +1414,11 @@ function App() {
                       autoFocus
                     />
                     <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                      {!GIPHY_API_KEY && (
+                        <div className="text-red-400 text-sm p-2">
+                          ⚠️ GIF недоступны: отсутствует API ключ
+                        </div>
+                      )}
                       {gifResults.map(gif => (
                         <img
                           key={gif.url}
@@ -1404,7 +1431,9 @@ function App() {
                           }}
                         />
                       ))}
-                      {gifSearch && gifResults.length === 0 && <div className="text-gray-400 text-sm">Нет результатов</div>}
+                      {gifSearch && gifResults.length === 0 && GIPHY_API_KEY && (
+                        <div className="text-gray-400 text-sm">Нет результатов</div>
+                      )}
                     </div>
                   </div>
                 )}

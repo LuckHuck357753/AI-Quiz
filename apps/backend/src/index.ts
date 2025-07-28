@@ -69,7 +69,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "wss:", "ws:"]
+      connectSrc: ["'self'", "wss:", "ws:", "https://api.giphy.com"]
     }
   }
 }));

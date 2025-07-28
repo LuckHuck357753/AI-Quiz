@@ -21,6 +21,9 @@ COPY apps/frontend ./apps/frontend
 
 # Собираем frontend
 WORKDIR /app/apps/frontend
+# Передаем переменные окружения для Vite во время сборки
+ARG VITE_GIPHY_API_KEY
+ENV VITE_GIPHY_API_KEY=$VITE_GIPHY_API_KEY
 RUN pnpm build
 
 # Собираем backend

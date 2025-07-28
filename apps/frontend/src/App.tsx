@@ -680,7 +680,9 @@ function App() {
         setRoomState((prev) => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
         
         // Запускаем анимацию ракеты через 2 секунды после старта игры
+        console.log('[Rocket] Scheduling rocket animation for multiplayer game');
         setTimeout(() => {
+          console.log('[Rocket] Showing rocket animation for multiplayer');
           setShowRocket(true);
         }, 2000);
       } else {
@@ -736,6 +738,10 @@ function App() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
           <h1 className="text-3xl font-bold mb-6">AI Quiz</h1>
           <p className="text-gray-300 mb-6">Введите пароль для доступа к игре</p>
@@ -772,10 +778,15 @@ function App() {
   if (mainMode === 'select') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
           <h1 className="text-3xl font-bold mb-4">AI Quiz</h1>
           <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold mb-4 w-full" onClick={() => setMainMode('single')}>Одиночная игра</button>
-          <button className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-bold w-full" onClick={() => setMainMode('multi')}>Мультиплеер</button>
+          <button className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-bold mb-4 w-full" onClick={() => setMainMode('multi')}>Мультиплеер</button>
+          <button className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded text-white font-bold w-full" onClick={() => setShowRocket(true)}>🚀 Тест ракеты</button>
         </div>
       </div>
     );
@@ -1002,6 +1013,10 @@ function App() {
   if (mainMode === 'multi' && roomState.mode === 'init') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
           <h1 className="text-3xl font-bold mb-4">AI Quiz — Мультиплеер</h1>
           <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold mb-4 w-full" onClick={() => setRoomState({ mode: 'creating', name: '', topic: '' })}>Создать комнату</button>
@@ -1014,6 +1029,10 @@ function App() {
   if (mainMode === 'multi' && roomState.mode === 'creating') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Создать комнату</h2>
           <input className="px-4 py-2 rounded text-black w-2/3 mb-4" type="text" placeholder="Ваше имя" value={nameInput} onChange={e => setNameInput(e.target.value)} />
@@ -1153,6 +1172,10 @@ function App() {
   if (mainMode === 'multi' && roomState.mode === 'joining') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Войти в комнату</h2>
           <input className="px-4 py-2 rounded text-black w-2/3 mb-4" type="text" placeholder="Ваше имя" value={nameInput} onChange={e => setNameInput(e.target.value)} />

@@ -496,7 +496,9 @@ function App() {
     socket.emit('startGame', { name: nameInput.trim(), topic: sendTopic });
     
     // Запускаем анимацию ракеты через 2 секунды после старта
+    console.log('[Rocket] Scheduling rocket animation for single player game');
     setTimeout(() => {
+      console.log('[Rocket] Showing rocket animation');
       setShowRocket(true);
     }, 2000);
   };

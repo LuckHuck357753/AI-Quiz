@@ -12,11 +12,14 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
+    console.log('[YandexRocket] useEffect triggered:', { isVisible, isAnimating });
     if (isVisible && !isAnimating) {
+      console.log('[YandexRocket] Starting animation');
       setIsAnimating(true);
       
       // Запускаем анимацию через небольшую задержку
       const timer = setTimeout(() => {
+        console.log('[YandexRocket] Animation completed');
         setIsAnimating(false);
         onAnimationComplete?.();
       }, 3000); // 3 секунды на анимацию
@@ -25,6 +28,7 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
     }
   }, [isVisible, isAnimating, onAnimationComplete]);
 
+  console.log('[YandexRocket] Rendering component:', { isVisible, isAnimating });
   if (!isVisible) return null;
 
   return (

@@ -1190,7 +1190,7 @@ function App() {
         {/* Видео Я team прямо над столом в правой части */}
         {showYateamVideo && (
           <div className="fixed inset-0 z-40 pointer-events-none">
-            <div className="absolute top-1/4 right-1/4 pointer-events-auto">
+            <div className="absolute top-1/6 right-1/6 pointer-events-auto">
               <div className="relative">
                 <video 
                   src="/assets/yateam.mp4" 

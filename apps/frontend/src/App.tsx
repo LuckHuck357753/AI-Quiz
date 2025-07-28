@@ -1218,7 +1218,7 @@ function App() {
                   src="/assets/yateam.mp4" 
                   controls 
                   autoPlay 
-                  className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600"
+                  className="w-96 h-64 rounded-lg shadow-2xl"
                   onError={(e) => {
                     console.error('[Video] Error loading video:', e);
                     console.error('[Video] Video element:', e.target);

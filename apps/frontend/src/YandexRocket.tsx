@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-// 🚀 Yandex Team Rocket - User's original GIF
+// 🚀 Yandex Team Rocket - PNG с прозрачностью
 
 interface YandexRocketProps {
   isVisible?: boolean;
@@ -46,54 +46,35 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
         height: '80px',
         transition: isAnimating 
           ? 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.8s ease-in' 
-          : 'transform 0.5s ease-out, opacity 0.5s ease-out'
+          : 'transform 0.5s ease-out, opacity 0.5s ease-out',
+        backgroundColor: 'transparent' // Явно задаём прозрачный фон
       }}
     >
-      {/* Контейнер с фоном игры для маскировки прозрачности */}
-      <div 
-        className="w-full h-full relative overflow-hidden rounded-lg"
+      {/* PNG ракета с альфа-каналом */}
+      <img 
+        src="/assets/yandex-rocket.png"
+        alt="Yandex Team Rocket"
+        className="w-full h-full object-contain"
         style={{
-          background: 'linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%)',
-          boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)'
+          filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))',
+          backgroundColor: 'transparent' // Явно убираем фон у изображения
         }}
-      >
-        {/* Оригинальный GIF с ракетой Yandex Team */}
-        <img 
-          src="/assets/yandex-rocket.gif"
-          alt="Yandex Team Rocket"
-          className="w-full h-full object-contain"
-          style={{
-            filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6))',
-            mixBlendMode: 'normal'
-          }}
-        />
-      </div>
+      />
       
-      {/* CSS для полного удаления прозрачности */}
+      {/* CSS для правильной работы с прозрачностью */}
       <style dangerouslySetInnerHTML={{
         __html: `
-          /* Убираем все прозрачные области */
-          img[src="/assets/yandex-rocket.gif"] {
-            background: transparent !important;
-            mix-blend-mode: normal !important;
-            isolation: isolate;
-            image-rendering: pixelated;
-          }
-          
-          /* Принудительно убираем прозрачность */
-          img[src="/assets/yandex-rocket.gif"] {
+          /* Убираем все фоны для правильной прозрачности */
+          img[src="/assets/yandex-rocket.png"] {
             background-color: transparent !important;
+            background: transparent !important;
             background-image: none !important;
-            -webkit-background-clip: unset !important;
-            background-clip: unset !important;
           }
           
-          /* Альтернативный способ - замена прозрачности на цвет фона */
-          @supports (mix-blend-mode: multiply) {
-            img[src="/assets/yandex-rocket.gif"] {
-              mix-blend-mode: multiply;
-              background-color: #111827 !important;
-            }
+          /* Контейнер тоже должен быть прозрачным */
+          .rocket-container {
+            background-color: transparent !important;
+            background: transparent !important;
           }
         `
       }} />

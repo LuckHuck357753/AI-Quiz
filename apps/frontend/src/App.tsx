@@ -487,6 +487,7 @@ function App() {
   // Подписка на показ видео Я team
   useEffect(() => {
     function onShowYateamVideo() {
+      console.log('[Video] Received showYateamVideo event from server');
       setShowYateamVideo(true);
     }
     socket.on('showYateamVideo', onShowYateamVideo);
@@ -502,7 +503,13 @@ function App() {
 
   // Функция для показа видео Я team всем игрокам
   const handleShowYateamVideo = () => {
-    if (!roomState || !('code' in roomState)) return;
+    console.log('[Video] handleShowYateamVideo called');
+    if (!roomState || !('code' in roomState)) {
+      console.log('[Video] No room state or code, showing locally only');
+      setShowYateamVideo(true);
+      return;
+    }
+    console.log('[Video] Emitting showYateamVideo to server');
     socket.emit('showYateamVideo', { code: roomState.code });
     setShowYateamVideo(true);
   };
@@ -1440,7 +1447,14 @@ function App() {
                 src="/assets/yateam.mp4" 
                 controls 
                 autoPlay 
-                className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600" 
+                className="w-96 h-64 rounded-lg shadow-2xl border-2 border-gray-600"
+                onError={(e) => {
+                  console.error('[Video] Error loading video:', e);
+                  console.error('[Video] Video element:', e.target);
+                }}
+                onLoadStart={() => console.log('[Video] Loading started')}
+                onCanPlay={() => console.log('[Video] Can play')}
+                onPlay={() => console.log('[Video] Playing')}
               />
               <button
                 className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition"

@@ -993,17 +993,22 @@ io.on('connection', (socket: Socket) => {
 
   // Старт игры в комнате
   socket.on('startGame', async (data: { code: string }, cb) => {
+    console.log('[startGame MULTI] === НАЧАЛО СТАРТА ИГРЫ ===');
+    console.log('[startGame MULTI] от игрока:', socket.id, 'для комнаты:', data.code);
     const room = rooms[data.code];
     if (!room || room.started) {
+      console.log('[startGame MULTI] ошибка: комната не найдена или уже начата');
       cb && cb({ error: 'Комната не найдена или уже начата' });
       return;
     }
     if (!room.ready) room.ready = {};
     if (room.players.some(id => !room.ready![id])) {
+      console.log('[startGame MULTI] ошибка: не все игроки готовы. Готовы:', Object.keys(room.ready).filter(id => room.ready![id]));
       cb && cb({ error: 'Не все игроки готовы!' });
       return;
     }
-    console.log('[startGame MULTI] room.code:', data.code, 'topic:', room.topic);
+    console.log('[startGame MULTI] все игроки готовы, начинаем игру');
+    console.log('[startGame MULTI] room.code:', data.code, 'topic:', room.topic, 'players:', room.players);
     if (!room.topic || typeof room.topic !== 'string' || !room.topic.trim()) {
       cb && cb({ error: 'Не выбрана тема для игры. Попробуйте ещё раз.' });
       room.started = false;
@@ -1062,10 +1067,17 @@ io.on('connection', (socket: Socket) => {
   });
 
   function sendSynchronizedQuestion(code: string) {
+    console.log('[sendSynchronizedQuestion] === ОТПРАВКА ВОПРОСА ===');
+    console.log('[sendSynchronizedQuestion] код комнаты:', code, 'время:', new Date().toISOString());
     const room = rooms[code];
-    if (!room) return;
+    if (!room) {
+      console.log('[sendSynchronizedQuestion] ошибка: комната не найдена');
+      return;
+    }
     const idx = room.currentQuestionIndex ?? 0;
+    console.log('[sendSynchronizedQuestion] индекс вопроса:', idx, 'всего вопросов:', room.questions.length);
     if (idx >= room.questions.length) {
+      console.log('[sendSynchronizedQuestion] игра окончена, отправляем gameOver всем');
       // Игра окончена для всех
       room.players.forEach(id => {
         io.to(id).emit('gameOver', { score: room.scores[id], total: room.questions.length });
@@ -1080,12 +1092,15 @@ io.on('connection', (socket: Socket) => {
     room.answered = new Set();
     // Отправить вопрос всем
     const q = room.questions[idx];
-    console.log(`[sendSynchronizedQuestion] code: ${code}, idx: ${idx}, question: ${q.question}`);
-    console.log(`[sendSynchronizedQuestion] players:`, room.players.map(id => ({ id, name: room.playerNames[id] })));
+    console.log(`[sendSynchronizedQuestion] отправляем вопрос #${idx + 1}:`, q.question);
+    console.log(`[sendSynchronizedQuestion] игроки в комнате:`, room.players.map(id => ({ id, name: room.playerNames[id] })));
+    
+    // Отправляем вопрос ВСЕМ игрокам одновременно
     room.players.forEach(id => {
-      console.log('[sendSynchronizedQuestion][to player]', id, { ...q, number: idx + 1, total: room.questions.length });
-      io.to(id).emit('quizQuestion', { ...q, number: idx + 1, total: room.questions.length });
-      console.log('[sendSynchronizedQuestion] sent quizQuestion to player:', id, 'question number:', idx + 1);
+      const questionData = { ...q, number: idx + 1, total: room.questions.length };
+      console.log('[sendSynchronizedQuestion] отправляем игроку:', id, 'имя:', room.playerNames[id], 'вопрос #:', idx + 1, 'время:', new Date().toISOString());
+      io.to(id).emit('quizQuestion', questionData);
+      console.log('[sendSynchronizedQuestion] ✓ отправлен quizQuestion игроку:', id, 'вопрос #:', idx + 1);
     });
     // Лидерборд
     const leaderboard = room.players.map(pid => ({ name: room.playerNames[pid], score: room.scores[pid] || 0 }))

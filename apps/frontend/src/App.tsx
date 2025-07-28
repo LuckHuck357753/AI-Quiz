@@ -382,7 +382,13 @@ function App() {
       socket.on('quizQuestion', (data: QuizQuestion) => {
         const currentMainMode = mainModeRef.current;
         const currentRoomState = roomStateRef.current;
-        console.log('[frontend][quizQuestion] received:', data, 'mainMode:', currentMainMode, 'roomState:', currentRoomState, 'socket.id:', socket.id, 'question number:', data.number);
+        console.log('[frontend][quizQuestion] === ПОЛУЧЕН ВОПРОС ===');
+        console.log('[frontend][quizQuestion] время получения:', new Date().toISOString());
+        console.log('[frontend][quizQuestion] socket.id:', socket.id);
+        console.log('[frontend][quizQuestion] mainMode:', currentMainMode);
+        console.log('[frontend][quizQuestion] roomState:', currentRoomState);
+        console.log('[frontend][quizQuestion] данные вопроса:', data);
+        console.log('[frontend][quizQuestion] номер вопроса:', data.number, 'из', data.total);
         if (currentMainMode === 'single') {
           setLoadingQuestions(false);
           setQuiz(data);
@@ -717,14 +723,22 @@ function App() {
   };
   // Мультиплеер: старт игры
   const handleStartRoomGame = () => {
+    console.log('[handleStartRoomGame] === НАЧАЛО СТАРТА ИГРЫ ===');
+    console.log('[handleStartRoomGame] время нажатия:', new Date().toISOString());
+    console.log('[handleStartRoomGame] socket.id:', socket.id);
+    console.log('[handleStartRoomGame] roomCode:', roomCode);
+    console.log('[handleStartRoomGame] roomState:', roomState);
+    console.log('[handleStartRoomGame] mainMode:', mainMode);
+    
     setMainMode('multi'); // Явно мультиплеер
-    console.log('[handleStartRoomGame] mainMode:', mainMode, 'roomState:', roomState, 'socket.id:', socket.id);
+    console.log('[handleStartRoomGame] отправляем startGame на сервер');
     socket.emit('startGame', { code: roomCode }, (res: { success?: boolean; error?: string }) => {
+      console.log('[handleStartRoomGame] получен callback от сервера:', res);
       if (res.success) {
+        console.log('[handleStartRoomGame] ✓ успешный старт, ждем quizQuestion от сервера');
         setRoomState((prev) => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
-        
-
       } else {
+        console.log('[handleStartRoomGame] ✗ ошибка старта:', res.error);
         alert(res.error || 'Ошибка старта игры');
         setRoomState({ mode: 'init' });
         setMainMode('select');

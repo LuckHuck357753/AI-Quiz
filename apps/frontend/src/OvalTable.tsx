@@ -88,9 +88,14 @@ export default function OvalTable({ players, onAvatarClick, onInteraction, width
             </div>
           );
         })}
-        {/* Подсказка в центре */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400 text-sm text-center pointer-events-none select-none" style={{ width: 180 }}>
-          Кликните на аватар другого игрока для взаимодействия!
+        {/* Логотип Yandex Team в центре */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none flex items-center justify-center" style={{ width: 180 }}>
+          <div className="flex items-center gap-2 bg-gray-800 bg-opacity-80 rounded-lg px-4 py-2">
+            <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Я</span>
+            </div>
+            <span className="text-white font-semibold text-lg" style={{ fontFamily: 'cursive' }}>team</span>
+          </div>
         </div>
       </div>
     </div>

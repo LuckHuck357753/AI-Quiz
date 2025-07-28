@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-// 🚀 Yandex Team Rocket - PNG с прозрачностью
+// 🚀 Yandex Team Rocket - Временное решение с GIF
 
 interface YandexRocketProps {
   isVisible?: boolean;
@@ -50,9 +50,9 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
         backgroundColor: 'transparent' // Явно задаём прозрачный фон
       }}
     >
-      {/* PNG ракета с альфа-каналом */}
+      {/* Временное решение с GIF */}
       <img 
-        src="/assets/yandex-rocket.png"
+        src="/assets/yandex-rocket.gif"
         alt="Yandex Team Rocket"
         className="w-full h-full object-contain"
         style={{
@@ -65,10 +65,11 @@ const YandexRocket: React.FC<YandexRocketProps> = ({
       <style dangerouslySetInnerHTML={{
         __html: `
           /* Убираем все фоны для правильной прозрачности */
-          img[src="/assets/yandex-rocket.png"] {
+          img[src="/assets/yandex-rocket.gif"] {
             background-color: transparent !important;
             background: transparent !important;
             background-image: none !important;
+            mix-blend-mode: normal !important;
           }
           
           /* Контейнер тоже должен быть прозрачным */

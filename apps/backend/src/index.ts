@@ -518,7 +518,11 @@ async function generateMovieImageQuestion(): Promise<QuizQ | null> {
 }
 
 async function generateQuestionsForTopic(topic: string): Promise<QuizQ[]> {
-  if (!topic || typeof topic !== 'string') return [];
+  console.log('[generateQuestionsForTopic] начало для темы:', topic);
+  if (!topic || typeof topic !== 'string') {
+    console.log('[generateQuestionsForTopic] неверная тема:', topic);
+    return [];
+  }
   
   // Для темы "Игра по файлу" - возвращаем пустой массив, так как вопросы будут загружены через файл
   if (topic === 'Игра по файлу') {
@@ -1018,7 +1022,12 @@ io.on('connection', (socket: Socket) => {
         return;
       }
     } else if (questions.length === 0) {
+      console.log('[startGame MULTI] генерируем вопросы для темы:', room.topic);
       questions = await generateQuestionsForTopic(room.topic);
+      console.log('[startGame MULTI] результат генерации:', questions.length, 'вопросов');
+      if (questions.length > 0) {
+        console.log('[startGame MULTI] первые вопросы:', questions.slice(0, 3).map(q => q.question));
+      }
       quizTopics[room.topic] = questions;
       console.log('[startGame MULTI] после генерации:', questions.length, questions.map(q => q.question));
     }

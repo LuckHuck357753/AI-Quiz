@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import AvatarPicker from './AvatarPicker';
 import OvalTable, { OvalTablePlayer } from './OvalTable';
+import YandexRocket from './YandexRocket';
 
 console.log('[frontend] socket.id при инициализации:', io().id);
 
@@ -90,6 +91,9 @@ function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Состояние для анимированной ракеты
+  const [showRocket, setShowRocket] = useState(false);
 
   const roomStateRef = useRef(roomState);
   useEffect(() => {
@@ -490,6 +494,11 @@ function App() {
     setLoadingQuestions(true);
     const sendTopic = topicMode === 'movie' ? 'Кино' : topic.trim();
     socket.emit('startGame', { name: nameInput.trim(), topic: sendTopic });
+    
+    // Запускаем анимацию ракеты через 2 секунды после старта
+    setTimeout(() => {
+      setShowRocket(true);
+    }, 2000);
   };
 
   // Функции для работы с файлами
@@ -667,6 +676,11 @@ function App() {
     socket.emit('startGame', { code: roomCode }, (res: { success?: boolean; error?: string }) => {
       if (res.success) {
         setRoomState((prev) => prev.mode === 'waiting' ? { ...prev, mode: 'playing' } : prev);
+        
+        // Запускаем анимацию ракеты через 2 секунды после старта игры
+        setTimeout(() => {
+          setShowRocket(true);
+        }, 2000);
       } else {
         alert(res.error || 'Ошибка старта игры');
         setRoomState({ mode: 'init' });
@@ -769,6 +783,10 @@ function App() {
   if (mainMode === 'single') {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <YandexRocket 
+        isVisible={showRocket} 
+        onAnimationComplete={() => setShowRocket(false)} 
+      />
       <div className="text-center w-full max-w-md p-6 bg-gray-800 rounded shadow-lg">
         <div className="mb-4 text-2xl font-bold text-blue-300">Счёт: {score}</div>
         <h1 className="text-3xl font-bold mb-4">AI Quiz</h1>
@@ -1152,6 +1170,10 @@ function App() {
     );
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <YandexRocket 
+          isVisible={showRocket} 
+          onAnimationComplete={() => setShowRocket(false)} 
+        />
         <div className="flex flex-row justify-center gap-8 w-full max-w-[1400px]">
           {/* Левая колонка: игровой блок */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-[320px] max-w-md">

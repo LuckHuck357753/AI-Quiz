@@ -1035,16 +1035,21 @@ io.on('connection', (socket: Socket) => {
       room.scores[id] = 0;
       room.seenQuestions[id] = new Set();
     });
+    // Отправляем callback только после того, как первый вопрос отправлен
     sendSynchronizedQuestion(data.code);
-    io.to(data.code).emit('playersUpdate', {
-      players: room.players.map(id => ({
-        id,
-        name: room.playerNames[id],
-        avatar: room.playerAvatars[id],
-        answered: !!room.answered?.has(id)
-      }))
-    });
-    cb && cb({ success: true });
+    
+    // Небольшая задержка для гарантии отправки первого вопроса
+    setTimeout(() => {
+      io.to(data.code).emit('playersUpdate', {
+        players: room.players.map(id => ({
+          id,
+          name: room.playerNames[id],
+          avatar: room.playerAvatars[id],
+          answered: !!room.answered?.has(id)
+        }))
+      });
+      cb && cb({ success: true });
+    }, 100);
   });
 
   function sendSynchronizedQuestion(code: string) {
@@ -1071,6 +1076,7 @@ io.on('connection', (socket: Socket) => {
     room.players.forEach(id => {
       console.log('[sendSynchronizedQuestion][to player]', id, { ...q, number: idx + 1, total: room.questions.length });
       io.to(id).emit('quizQuestion', { ...q, number: idx + 1, total: room.questions.length });
+      console.log('[sendSynchronizedQuestion] sent quizQuestion to player:', id, 'question number:', idx + 1);
     });
     // Лидерборд
     const leaderboard = room.players.map(pid => ({ name: room.playerNames[pid], score: room.scores[pid] || 0 }))

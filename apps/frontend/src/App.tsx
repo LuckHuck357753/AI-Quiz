@@ -382,7 +382,7 @@ function App() {
       socket.on('quizQuestion', (data: QuizQuestion) => {
         const currentMainMode = mainModeRef.current;
         const currentRoomState = roomStateRef.current;
-        console.log('[frontend][quizQuestion] received:', data, 'mainMode:', currentMainMode, 'roomState:', currentRoomState, 'socket.id:', socket.id);
+        console.log('[frontend][quizQuestion] received:', data, 'mainMode:', currentMainMode, 'roomState:', currentRoomState, 'socket.id:', socket.id, 'question number:', data.number);
         if (currentMainMode === 'single') {
           setLoadingQuestions(false);
           setQuiz(data);
